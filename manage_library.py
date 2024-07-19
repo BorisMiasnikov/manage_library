@@ -11,32 +11,47 @@ class Book:
         self.id = _id
         self.status = "в наличии"
 
-    def get_book(self) -> dict:
-        return {"id": self.id, "title": self.title, "aythor": self.author, "year": self.year, "status": self.status, }
-
-    def change_status(self, status:str)->None:
+    def change_status(self, status: str) -> None:
         if status in _valid_status:
             self.status = status
         else:
             raise ValueError(f"Статус {status} запрещен")
 
-def find_book(title:str|None = None, author:str|None= None, year:int|None= None):
+
+def find_book(title: str | None = None, author: str | None = None, year: int | None = None) -> list[cls]:
     looking_book = []
     if not title:
         for val in _list_books.values():
             if val.title == title:
                 looking_book.append(val)
     elif not author:
-        if looking_book:
+        if not looking_book:
             for val in _list_books.values():
-                if val.title == title:
+                if val.author == author:
                     looking_book.append(val)
         else:
             for book in looking_book:
-                if book.author == author
+                if book.author == author:
+                    looking_book.append(book)
+    elif not year:
+        if not looking_book:
+            for val in _list_books.values():
+                if val.year == year:
+                    looking_book.append(val)
+        else:
+            for book in looking_book:
+                if book.year == year:
+                    looking_book.append(book)
+    return looking_book
 
-1
-
+def show_all_book():
+    for book in _list_books.values():
+        print(f"Ниже представлены все книги в нашей библиотеке:"
+              f"инедтификатор - {book.id}"
+              f"Название книги - {book.title}"
+              f"Автор книги - {book.author}"
+              f"Год публикации - {book.year}"
+              f"Наличие в библиотеке - {book.status}")
 
 def main():
     global _id
