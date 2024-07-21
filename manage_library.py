@@ -34,11 +34,11 @@ class Library:
     def find_book(self, title: str | None = None, author: str | None = None, year: int | None = None) -> list:
         search_result = []
         for val in self.dict_books.values():
-            if (title is None or book.title == title) and \
-                    (author is None or book.author == author) and \
-                    (year is None or book.year == year):
-                search_result.append(book)
-        return looking_book
+            if (title is None or val.title == title) and \
+                    (author is None or val.author == author) and \
+                    (year is None or val.year == year):
+                search_result.append(val)
+        return search_result
 
     def show_all_book(self):
         if self.dict_books.values():
@@ -51,11 +51,6 @@ class Library:
 
     def delete_book(self, id: int):
         return self.dict_books.pop(id)
-
-
-
-
-
 
 
 def main(value):
@@ -82,7 +77,7 @@ def main(value):
                             raise ValueError("У книги должен быть автор ")
                         year = int(input("Введите год издания книги: "))
                         if year < 1:
-                            raise ValueError("Все, что издавалось до рождества христова, в нишу библиотеку не вхоже")
+                            raise ValueError("Все, что издавалось до рождества христова, в нашу библиотеку не вхоже")
                     except ValueError:
                         print("Вы ввели не коректные данные, повторите ввод сначала")
                         continue
@@ -106,11 +101,45 @@ def main(value):
                 except KeyError:
                     print("Такой книги нет в библиотеке")
             case '3':
-                pass
+                print("Введитте название, автора или год издания книги\n"
+                      "если что - то не известно - пропустите, нажав Ввод")
+                try:
+                    title = input("Введите название книги: ")
+                    if not title:
+                        title = None
+                    author = input("Введите Автора книги: ")
+                    if not author:
+                        author = None
+                    year = input("Введите год издания книги: ")
+                    if not year:
+                        year = None
+                    year = int(year)
+                    if year < 1:
+                        raise ValueError("Все, что издавалось до рождества христова, в нашу библиотеку не вхоже")
+                except TypeError:
+                    pass
+                except ValueError:
+                    print("Вы ввели не коректные данные, повторите ввод сначала")
+                for book in value.find_book(title, author, year):
+                    print(book.__str__())
+                    print("|||||||||/////___")
             case '4':
                 value.show_all_book()
             case '5':
-                pass
+                try:
+                    id_book = int(input("Введите номер книжки в библиотеке, у которой хотите изменить статус"))
+                    new_status = input("Введите новый статус книги")
+                    if id_book < 1:
+                        raise ValueError
+                except ValueError:
+                    print("Вы ввели не коректные данные")
+                except KeyError:
+                    print("Такой книги нет в библиотеке")
+                try:
+                    value.dict_books[id_book].change_status(new_status)
+                    print(f"Статус книги {value.dict_books[id_book].title} изменен ")
+                except ValueError:
+                    print("Такого статуса нет")
             case '0':
                 exit()
             case _:
@@ -118,4 +147,13 @@ def main(value):
 
 
 x = Library()
+title = "Книга "
+author = "Автор"
+year = 1
+for i in range(10):
+    title += str(i)
+    author += str(i)
+    year += i
+    book = Book(title, author, year)
+    x.dict_books[book.id] = book
 main(x)
