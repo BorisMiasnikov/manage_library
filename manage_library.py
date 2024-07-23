@@ -1,7 +1,5 @@
 import json
 
-""" Добавить чтение существующей библиотеки из джасона,  в конструкторе добавить условие гже сначала считывает джасон и записывает данные в словарь
-если есключение что файла нет, pass"""
 _default_json_name = "Library"
 
 
@@ -36,7 +34,7 @@ class Book:
         else:
             raise ValueError(f"Статус {status} запрещен\n")
 
-    def _set_id(self, id):
+    def _set_id(self, id: int) -> int:
         self.id = id
 
     def _generate_id(self) -> int:
@@ -56,7 +54,25 @@ class Book:
 class Library:
     """
     Класс Library служит хранилищем (библиотекой) для экземпляров класса Book (книг)
-    Атрибут default_json_name - используется для дефолтного именования json-файла, с возможностью изменить названеи
+    Attributes
+    -----------
+    self.dict_books - словарь, в котором ключем является идентификатор экземпляра класса Book, а значением ключа
+    соответственно сам экземпляр класса Book
+
+    Methods
+    -------
+    _find_book() - принимает на вход строковые значения для автора и названия книга, целочисленные значение для года
+    По полученным параметрам ищет книги в библиотеке, и возвращает списог книг, если они есть
+    если нет - пустой список
+
+    _get_by_id() - метод проверяет, есть ли книга в библиотеке с введенным индексом
+
+    _show_all_book() - итерируется по всем книжкам библиотеки и вызывает у них метод ___str___()
+
+    _delete_book() - возвращает и удаляет из словаря self.dict_books значение по переданному ключу,
+    выбрасывает исключение KeyError если ключа не будет
+
+    _write_json() - записывает/перезаписывает JSON-файл, вызывается при каком - либо изменении словаря self.dict_books
     """
 
     def __init__(self) -> dict:
@@ -71,7 +87,7 @@ class Library:
                 _search_result.append(val)
         return _search_result
 
-    def _get_by_id(self, id: int):
+    def _get_by_id(self, id: int) -> dict:
         if not self.dict_books.get(id):
             raise KeyError(f"Книги с номером {id} не существует ")
         else:
@@ -88,8 +104,7 @@ class Library:
         else:
             print("В библиотеке пока нет книг\n")
 
-
-    def _delete_book(self, id: int):
+    def _delete_book(self, id: int) -> dict:
         if self._get_by_id(id):
             return self.dict_books.pop(id)
 
@@ -101,7 +116,10 @@ class Library:
             json.dump(json_list, write_file, ensure_ascii=False, indent=4)
 
 
-def _get_new_book_data():
+def _get_new_book_data() -> tuple:
+    """Функция ввода данных от пользователя, для создания или поиска книг
+    проверяет вводимые данные и возвращает кортеж"""
+
     try:
         title = input("Введите название книги: \n")
         if not title:
@@ -141,6 +159,10 @@ def _delete_book(value: Library):
 
 
 def _find_library_book(value: Library):
+    """Функция принмает от пользователя данные об искомой книге и вызывает метод класса Library._find_book
+    Если полученные от метода список содержит элементы, выводит их
+    иначе сообщает что книги не найдены"""
+
     print("Введите название, автора или год издания книги"
           "если что - то не известно - пропустите, нажав Ввод\n")
     title, author, year = _get_new_book_data()
@@ -154,7 +176,11 @@ def _find_library_book(value: Library):
     else:
         print("Книжек с такими параметрами не нашлось")
 
+
 def _chenge_status_library_book(value: Library):
+    """Функция принмает от пользователя данные и выдывает метод класса Book._change_status
+    изменения записывает в JSON-файл"""
+
     id_book = int(input("Введите номер книжки в библиотеке, у которой хотите изменить статус"))
     new_status = input("Введите новый статус книги\n")
     value._get_by_id(id_book)._change_status(new_status)
@@ -163,10 +189,17 @@ def _chenge_status_library_book(value: Library):
 
 
 def _read_json(json_name: str = _default_json_name) -> list[dict]:
+    """Парсит JSON-файл и возвращает список словарей
+    Если файла нет в папке с проектом, вызовет исключение FileNotFoundError"""
+
     with open(json_name, "r", encoding="utf-8") as json_file:
         return json.load(json_file)
 
+
 def _create_library(value: Library):
+    """Функция подгрузки данных из JSON- файла, если таковой существует.
+     Проходит циклом по _read_json и создает экземпляры класса Book, с учетом идентификаторов и статуса книги"""
+
     for book in _read_json():
         title, author, year = book.get("title"), book.get("author"), book.get("year")
         old_book = Book(title, author, year)
@@ -185,7 +218,6 @@ def main(value):
     Функция, которая связывает между собой два класса Library и Book, организовывает добавление, удаление книг из библиотеки
     изменение статуса книги, вывод всех книг библиотеки и поиск по ним. Принимает от пользователя аргументы, в соответствии с которыми запускает работу определенных методов
     """
-
 
     while True:
         print("Выберите действия:\n"
@@ -213,8 +245,9 @@ def main(value):
                     exit()
                 case _:
                     print("Незнакомая команда, повторите ввод")
-        except ValueError:
+        except ValueError as e:
             print("Не верный ввод данных")
+            print(e)
         except KeyError as e:
             print(e)
 
