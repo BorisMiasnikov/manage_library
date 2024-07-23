@@ -1,13 +1,27 @@
+import json
+
+""" Добавить чтение существующей библиотеки из джасона,  в конструкторе добавить условие гже сначала считывает джасон и записывает данные в словарь
+если есключение что файла нет, pass"""
+_default_json_name = "Library"
+
+
 class Book:
+    """ Класс Book используется для создания книги по переданным аргументам
+    Attributes
+    -----------
+    _valid_status - список значений поля status, использкентся для проверки ввода
+    _id - порядковый номер экземпляра книги, увеличивается на один, после добавления нового экземпляра
+    """
+
     _valid_status = ["в наличии", "выдана", ]
     _id = 0
 
-    def __init__(self, title, author, year):
+    def __init__(self, title: str, author: str, year: int):
         self.title = title
         self.author = author
         self.year = year
         self.status = "в наличии"
-        self.id = self.generate_id()
+        self.id = self._generate_id()
 
     def __str__(self):
         return (f"инедтификатор - {self.id}\n"
@@ -16,44 +30,163 @@ class Book:
                 f"Год публикации - {self.year}\n"
                 f"Наличие в библиотеке - {self.status}\n")
 
-    def change_status(self, status: str) -> None:
+    def _change_status(self, status: str) -> None:
         if status in self._valid_status:
             self.status = status
         else:
-            raise ValueError(f"Статус {status} запрещен")
+            raise ValueError(f"Статус {status} запрещен\n")
 
-    def generate_id(self):
+    def _set_id(self, id):
+        self.id = id
+
+    def _generate_id(self) -> int:
         Book._id += 1
         return Book._id
 
+    def _get_dict_book(self) -> dict:
+        return {
+            "id": self.id,
+            "title": self.title,
+            "author": self.author,
+            "year": self.year,
+            "status": self.status,
+        }
+
 
 class Library:
-    def __init__(self):
+    """
+    Класс Library служит хранилищем (библиотекой) для экземпляров класса Book (книг)
+    Атрибут default_json_name - используется для дефолтного именования json-файла, с возможностью изменить названеи
+    """
+
+    def __init__(self) -> dict:
         self.dict_books = {}
 
-    def find_book(self, title: str | None = None, author: str | None = None, year: int | None = None) -> list:
-        search_result = []
+    def _find_book(self, title: str | None = None, author: str | None = None, year: int | None = None) -> list:
+        _search_result = []
         for val in self.dict_books.values():
             if (title is None or val.title == title) and \
                     (author is None or val.author == author) and \
                     (year is None or val.year == year):
-                search_result.append(val)
-        return search_result
+                _search_result.append(val)
+        return _search_result
 
-    def show_all_book(self):
+    def _get_by_id(self, id: int):
+        if not self.dict_books.get(id):
+            raise KeyError(f"Книги с номером {id} не существует ")
+        else:
+            result = self.dict_books.get(id)
+        return result
+
+    def _show_all_book(self):
         if self.dict_books.values():
             print(f"Ниже представлены все книги в нашей библиотеке:\n")
+            print("---------------------")
             for book in self.dict_books.values():
                 print(book.__str__())
-                print("|||||||||/////___")
+                print("---------------------\n")
         else:
-            print("В библиотеке пока нет книг")
+            print("В библиотеке пока нет книг\n")
 
-    def delete_book(self, id: int):
-        return self.dict_books.pop(id)
+
+    def _delete_book(self, id: int):
+        if self._get_by_id(id):
+            return self.dict_books.pop(id)
+
+    def _write_json(self, json_name: str = _default_json_name):
+        json_list = []
+        for val in self.dict_books.values():
+            json_list.append(val._get_dict_book())
+        with open(json_name, "w", encoding="utf-8") as write_file:
+            json.dump(json_list, write_file, ensure_ascii=False, indent=4)
+
+
+def _get_new_book_data():
+    try:
+        title = input("Введите название книги: \n")
+        if not title:
+            title = None
+        author = input("Введите автора книги: \n")
+        if not author:
+            author = None
+        year = input("Введите год издания книги: \n")
+        if not year:
+            year = None
+        year = int(year)
+    except TypeError:
+        pass
+    return (title, author, year)
+
+
+def _create_book(value: Library):
+    print("Для добавления книги, введите ее данные\n"
+          "обращаю ваше внимание, что все данные о книге должны быть заполнены название/автор/год(в формате числа)\n")
+    if input_result := _get_new_book_data():
+        title, author, year = input_result
+        if existed_book := value._find_book(title, author, year):
+            raise ValueError(f"Такая книга существует id ={existed_book[0].id}\n")
+        book = Book(title, author, year)
+        value.dict_books[book.id] = book
+        value._write_json()
+    else:
+        _create_book(value)
+
+
+def _delete_book(value: Library):
+    id_book = int(input("Введите номер книжки в библиотеке\n"))
+    print("---------------------")
+    print(f"Книга {value._delete_book(id_book).title} удалена\n")
+    print("---------------------")
+    value._write_json()
+
+
+def _find_library_book(value: Library):
+    print("Введите название, автора или год издания книги"
+          "если что - то не известно - пропустите, нажав Ввод\n")
+    title, author, year = _get_new_book_data()
+    book_list = value._find_book(title, author, year)
+    if book_list:
+        print("По заданным параметрам нашлись книги:\n")
+        for book in book_list:
+            print("---------------------")
+            print(book.__str__())
+            print("---------------------")
+    else:
+        print("Книжек с такими параметрами не нашлось")
+
+def _chenge_status_library_book(value: Library):
+    id_book = int(input("Введите номер книжки в библиотеке, у которой хотите изменить статус"))
+    new_status = input("Введите новый статус книги\n")
+    value._get_by_id(id_book)._change_status(new_status)
+    value._write_json()
+    print(f"Статус книги {value.dict_books[id_book].title} изменен \n")
+
+
+def _read_json(json_name: str = _default_json_name) -> list[dict]:
+    with open(json_name, "r", encoding="utf-8") as json_file:
+        return json.load(json_file)
+
+def _create_library(value: Library):
+    for book in _read_json():
+        title, author, year = book.get("title"), book.get("author"), book.get("year")
+        old_book = Book(title, author, year)
+        old_book._change_status(book.get("status"))
+        old_book._set_id(int(book.get("id")))
+        value.dict_books[old_book.id] = old_book
+    print("В библиотеке есть несколько книжек")
 
 
 def main(value):
+    try:
+        _create_library(value)
+    except FileNotFoundError:
+        print("Давайте создадим новую библиотеку!")
+    """
+    Функция, которая связывает между собой два класса Library и Book, организовывает добавление, удаление книг из библиотеки
+    изменение статуса книги, вывод всех книг библиотеки и поиск по ним. Принимает от пользователя аргументы, в соответствии с которыми запускает работу определенных методов
+    """
+
+
     while True:
         print("Выберите действия:\n"
               "Добавить книгу - введите 1\n"
@@ -63,97 +196,29 @@ def main(value):
               "Изменить статус книги - введите 5\n"
               "Для выхода введите 0\n")
         command = input("Введите номер команды: ")
-        match command:
-            case '1':
-                while True:
-                    print("Для добавления книги, введите ее данные\n"
-                          "обращаю ваше внимание, что все данные о книге должны быть заполнены название/автор/год(в формате числа)")
-                    try:
-                        title = input("Введите название книги: ")
-                        if not title:
-                            raise ValueError("Название не может быть пустым")
-                        author = input("Введите Автора книги: ")
-                        if not author:
-                            raise ValueError("У книги должен быть автор ")
-                        year = int(input("Введите год издания книги: "))
-                        if year < 1:
-                            raise ValueError("Все, что издавалось до рождества христова, в нашу библиотеку не вхоже")
-                    except ValueError:
-                        print("Вы ввели не коректные данные, повторите ввод сначала")
-                        continue
-                    else:
-                        break
-                for val in value.dict_books.values():
-                    if val.title == title and val.author == author and val.year == year:
-                        print(f"Такая книга уже есть в библиотеке под номером {val.id}")
-                        break
-                else:
-                    book = Book(title, author, year)
-                    value.dict_books[book.id] = book
-            case '2':
-                try:
-                    id_book = int(input("Введите номер книжки в библиотеке"))
-                    if id_book < 1:
-                        raise ValueError
-                    print(f"Книга {value.delete_book(id_book).title} удалена")
-                except ValueError:
-                    print("Вы ввели не коректные данные")
-                except KeyError:
-                    print("Такой книги нет в библиотеке")
-            case '3':
-                print("Введитте название, автора или год издания книги\n"
-                      "если что - то не известно - пропустите, нажав Ввод")
-                try:
-                    title = input("Введите название книги: ")
-                    if not title:
-                        title = None
-                    author = input("Введите Автора книги: ")
-                    if not author:
-                        author = None
-                    year = input("Введите год издания книги: ")
-                    if not year:
-                        year = None
-                    year = int(year)
-                    if year < 1:
-                        raise ValueError("Все, что издавалось до рождества христова, в нашу библиотеку не вхоже")
-                except TypeError:
-                    pass
-                except ValueError:
-                    print("Вы ввели не коректные данные, повторите ввод сначала")
-                for book in value.find_book(title, author, year):
-                    print(book.__str__())
-                    print("|||||||||/////___")
-            case '4':
-                value.show_all_book()
-            case '5':
-                try:
-                    id_book = int(input("Введите номер книжки в библиотеке, у которой хотите изменить статус"))
-                    new_status = input("Введите новый статус книги")
-                    if id_book < 1:
-                        raise ValueError
-                except ValueError:
-                    print("Вы ввели не коректные данные")
-                except KeyError:
-                    print("Такой книги нет в библиотеке")
-                try:
-                    value.dict_books[id_book].change_status(new_status)
-                    print(f"Статус книги {value.dict_books[id_book].title} изменен ")
-                except ValueError:
-                    print("Такого статуса нет")
-            case '0':
-                exit()
-            case _:
-                print("Незнакомая команда, повторите ввод")
+
+        try:
+            match command:
+                case '1':
+                    _create_book(value)
+                case '2':
+                    _delete_book(value)
+                case '3':
+                    _find_library_book(value)
+                case '4':
+                    value._show_all_book()
+                case '5':
+                    _chenge_status_library_book(value)
+                case '0':
+                    exit()
+                case _:
+                    print("Незнакомая команда, повторите ввод")
+        except ValueError:
+            print("Не верный ввод данных")
+        except KeyError as e:
+            print(e)
 
 
-x = Library()
-title = "Книга "
-author = "Автор"
-year = 1
-for i in range(10):
-    title += str(i)
-    author += str(i)
-    year += i
-    book = Book(title, author, year)
-    x.dict_books[book.id] = book
-main(x)
+if __name__ == '__main__':
+    lib = Library()
+    main(lib)
