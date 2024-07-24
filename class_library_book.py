@@ -33,7 +33,7 @@ class Book:
         self.id = self._generate_id()
 
     def __str__(self):
-        return (f"инедтификатор - {self.id}\n"
+        return (f"Инедтификатор - {self.id}\n"
                 f"Название книги - {self.title}\n"
                 f"Автор книги - {self.author}\n"
                 f"Год публикации - {self.year}\n"

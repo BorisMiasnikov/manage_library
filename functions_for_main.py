@@ -37,7 +37,7 @@ def _create_book(value: Library):
 
 
 def _delete_book(value: Library):
-    id_book = int(input("Введите номер книжки в библиотеке\n"))
+    id_book = int(input("Введите номер книги в библиотеке\n"))
     print("---------------------")
     print(f"Книга {value._delete_book(id_book).title} удалена\n")
     print("---------------------")
@@ -67,7 +67,7 @@ def _chenge_status_library_book(value: Library):
     """Функция принмает от пользователя данные и выдывает метод класса Book._change_status
     изменения записывает в JSON-файл"""
 
-    id_book = int(input("Введите номер книжки в библиотеке, у которой хотите изменить статус"))
+    id_book = int(input("Введите номер книги в библиотеке, у которой хотите изменить статус\n"))
     new_status = input("Введите новый статус книги\n")
     value._get_by_id(id_book)._change_status(new_status)
     value._write_json()
